@@ -1,0 +1,26 @@
+{
+  "name": "pinger",
+  "version": "1.0.0",
+  "description": "Small app for continues ping and display as tray icon",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fchen48/Pinger.git"
+  },
+  "author": "Fchen",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/Fchen48/Pinger/issues"
+  },
+  "homepage": "https://github.com/Fchen48/Pinger#readme",
+  "devDependencies": {
+    "electron": "^3.0.3"
+  },
+  "dependencies": {
+    "electron-config": "^1.0.0"
+  }
+}
