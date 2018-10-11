@@ -21,6 +21,7 @@
     "electron": "^3.0.3"
   },
   "dependencies": {
-    "electron-config": "^1.0.0"
+    "electron-config": "^1.0.0",
+    "puppeteer-render-text": "^1.0.3"
   }
 }

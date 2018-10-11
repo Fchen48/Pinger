@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Pinger</title>
+        <link type="text/css" rel="stylesheet" href="../css/pinger.css" media="screen,projection"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; script-src 'unsafe-inline'">
+        <meta charset="utf-8">
+    </head>
+    <body>
+        <header>
+            <td>Pinger</td>
+            <button id="close" class="right button button-x" onclick="window.close();">
+                <img width="12" src="../images/close.svg" onclick="window.close();">
+            </button>
+            <button id="minimize" class="right button" onclick="electron.ipcRenderer.send('window:minimize');">
+                <img width="12" src="../images/minimize.svg">
+            </button>
+        </header>
+
+        <main>
+            <div id="startstop">
+                <div id="buttontext" class="start" onclick="startPing();">Start</div>
+            </div>
+            <div id="ping" class="ping" style="opacity: 0">
+                <span id="pingresult"></span>
+            </div>
+        </main>
+
+        <footer>
+            <div class="row">
+                <input id="ip" placeholder="IP address or DNS name" type="text" value="8.8.8.8">
+                <!-- <label for="ip">IP address or DNS name</label> -->
+            </div>
+        </footer>
+
+        <script>
+            const electron = require('electron');
+            const ElectronConfig = require("electron-config");
+            const config = new ElectronConfig();
+
+            function startPing() {
+                electron.ipcRenderer.send("startPing", { ip: document.getElementById("ip").value, interval: 1000 });
+            }
+            function stopPing() {
+                electron.ipcRenderer.send("stopPing");
+            }
+
+            electron.ipcRenderer.on("start", () => {
+                console.log("STARTED");
+                const button = document.getElementById("buttontext");
+                button.innerHTML = "Stop";
+                button.classList.add("stop");
+                button.classList.remove("start");
+                button.setAttribute("onClick", "stopPing();");
+                document.getElementById("ping").style = "opacity: 1"
+                document.getElementById("pingresult").innerHTML = "";
+            });
+            electron.ipcRenderer.on("stop", () => {
+                console.log("STOPPED");
+                const button = document.getElementById("buttontext");
+                button.innerHTML = "Start";
+                button.classList.add("start");
+                button.classList.remove("stop");
+                button.setAttribute("onClick", "startPing();");
+                document.getElementById("ping").style = "opacity: 0"
+            });
+            electron.ipcRenderer.on("ping", (event, result) => {
+                if(result) {
+                    document.getElementById("pingresult").innerHTML = result;
+                }
+            });
+
+            if(config.get("active") === true) {
+                document.getElementById("ip").value = config.get("ip");
+                startPing();
+            }
+
+        </script>
+    </body>             
+</html>
