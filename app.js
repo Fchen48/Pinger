@@ -6,6 +6,7 @@ const path = require("path");
 const ping = require("./functions/ping");
 const log = require("./functions/log");
 const render = require("puppeteer-render-text");
+const AutoLaunch = require("auto-launch");
 
 let mainWindow;
 let tray;
@@ -13,6 +14,7 @@ const width = 240;
 const height = 360;
 const errorlog = path.join(electron.app.getPath("userData"), "logs", "error.log");
 const lastResults = [];
+const autostart = new AutoLaunch({ name: "Pinger" });
 
 generateTrayIcon("--")
 .catch(error => console.error(error));
@@ -45,12 +47,15 @@ electron.app.on("ready", () => {
         mainWindow.on("closed", () => {
             electron.app.quit();
         });
-        mainWindow.on("minimize", () => {
+        mainWindow.on("hide", () => {
             tray = new electron.Tray(path.join(__dirname, "tray.png"));
+            tray.on("click", () => {
+                mainWindow.show();
+
+            });
         });
-        mainWindow.on("restore", () => {
+        mainWindow.on("show", () => {
             tray.destroy();
-            tray = undefined;
         });
         mainWindow.once("ready-to-show", () => {
             mainWindow.show();
@@ -64,7 +69,23 @@ electron.ipcMain.on("window:minimize", () => {
         window.restore();
         return;
     }
-    window.minimize();
+    window.hide();
+});
+
+electron.ipcMain.on("window:autostart", () => {
+    autostart.isEnabled()
+    .then(result => {
+        if(result) {
+            autostart.disable();
+            config.set("autostart", false);
+            mainWindow.webContents.send("autostart");
+            return;
+        }
+        autostart.enable();
+        config.set("autostart", true);
+        mainWindow.webContents.send("autostart");
+    })
+    .catch(error => console.error(error));
 });
 
 electron.ipcMain.on("startPing", (event, data) => {
@@ -102,13 +123,17 @@ ping.on("ping", result => {
     if(value == "TIMEOUT") {
         valueIcon = "--";
     }
-    generateTrayIcon(valueIcon)
-    .then(() => {
-        if(tray) {
-            tray.setImage(path.join(__dirname, "tray.png"));
+    if(tray) {
+        if(!tray.isDestroyed()) {
+            generateTrayIcon(valueIcon)
+            .then(() => {
+                if(!tray.isDestroyed()) {
+                    tray.setImage(path.join(__dirname, "tray.png"));
+                }
+            })
+            .catch(error => console.error(error));
         }
-    })
-    .catch(error => console.error(error));
+    }
 });
 
 ping.once("error", error => {

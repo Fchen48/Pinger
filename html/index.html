@@ -16,6 +16,9 @@
             <button id="minimize" class="right button" onclick="electron.ipcRenderer.send('window:minimize');">
                 <img width="12" src="../images/minimize.svg">
             </button>
+            <button id="autostart" class="right button" onclick="electron.ipcRenderer.send('window:autostart');">
+                <img width="12" src="../images/autostart.svg">
+            </button>
         </header>
 
         <main>
@@ -39,12 +42,20 @@
             const ElectronConfig = require("electron-config");
             const config = new ElectronConfig();
 
+            autostart();
+
             function startPing() {
                 electron.ipcRenderer.send("startPing", { ip: document.getElementById("ip").value, interval: 1000 });
             }
+
             function stopPing() {
                 electron.ipcRenderer.send("stopPing");
             }
+
+            electron.ipcRenderer.on("autostart", () => {
+                console.log("AUTOSTART");
+                autostart();
+            });
 
             electron.ipcRenderer.on("start", () => {
                 console.log("STARTED");
@@ -76,6 +87,13 @@
                 startPing();
             }
 
+            function autostart() {
+                if(config.get("autostart")) {
+                    document.querySelector("#autostart > img").src = "../images/autostart_enabled.svg";
+                    return;
+                }
+                document.querySelector("#autostart > img").src = "../images/autostart.svg";
+            }
         </script>
     </body>             
 </html>
