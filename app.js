@@ -6,15 +6,60 @@ const path = require("path");
 const ping = require("./functions/ping");
 const log = require("./functions/log");
 const render = require("puppeteer-render-text");
+const jimp = require("jimp");
 const AutoLaunch = require("auto-launch");
 
 let mainWindow;
 let tray;
+let trayIcon;
 const width = 240;
 const height = 360;
 const errorlog = path.join(electron.app.getPath("userData"), "logs", "error.log");
 const lastResults = [];
 const autostart = new AutoLaunch({ name: "Pinger" });
+
+// const generateTrayIcon = text => new Promise((resolve, reject) => {
+//     render({
+//         text,
+//         output: "tray.png",
+//         width: 64,
+//         height: 64,
+//         style: {
+//             fontFamily: "sans-serif",
+//             fontSize: 56,
+//             color: "white",
+//             width: "100%",
+//             height: "100%",
+//             "line-height": "64px",
+//             "text-align": "center",
+//             margin: 0
+//         }
+//     })
+//     .then(() => resolve(path.join(__dirname, "tray.png")))
+//     .catch(error => reject(error));
+// });
+
+const generateTrayIcon = text => new Promise((resolve, reject) => {
+    jimp.loadFont(jimp.FONT_SANS_64_WHITE)
+    .then(font => {
+        jimp.read(80, 80, 0xfff)
+        .then(img => {
+            img.print(font, 0, 0, {
+                text,
+                alignmentX: jimp.HORIZONTAL_ALIGN_CENTER,
+                alignmentY: jimp.VERTICAL_ALIGN_MIDDLE
+            }, 80, 80)
+            .resize(64, 64)
+            .write("test.png")
+            .getBuffer(jimp.MIME_PNG, (error, buffer) => {
+                trayIcon = electron.nativeImage.createFromBuffer(buffer);
+                return resolve();
+            });
+        })
+        .catch(console.error);
+    })
+    .catch(console.error);
+});
 
 generateTrayIcon("--")
 .catch(error => console.error(error));
@@ -48,7 +93,9 @@ electron.app.on("ready", () => {
             electron.app.quit();
         });
         mainWindow.on("hide", () => {
-            tray = new electron.Tray(path.join(__dirname, "tray.png"));
+            // tray = new electron.Tray(path.join(__dirname, "tray.png"));
+            console.log(trayIcon);
+            tray = new electron.Tray(trayIcon);
             tray.on("click", () => {
                 mainWindow.show();
 
@@ -126,11 +173,12 @@ ping.on("ping", result => {
     if(tray) {
         if(!tray.isDestroyed()) {
             generateTrayIcon(valueIcon)
-            .then(() => {
-                if(!tray.isDestroyed()) {
-                    tray.setImage(path.join(__dirname, "tray.png"));
-                }
-            })
+            // .then(() => {
+            //     if(!tray.isDestroyed()) {
+
+            //         tray.setImage(path.join(__dirname, "tray.png"));
+            //     }
+            // })
             .catch(error => console.error(error));
         }
     }
@@ -143,26 +191,3 @@ ping.once("error", error => {
 process.on("uncaughtException", (error) => {
     log(error, errorlog);
 });
-
-function generateTrayIcon(text) {
-    return new Promise(function (resolve, reject) {
-        render({
-            text,
-            output: "tray.png",
-            width: 64,
-            height: 64,
-            style: {
-                fontFamily: "sans-serif",
-                fontSize: 56,
-                color: "white",
-                width: "100%",
-                height: "100%",
-                "line-height": "64px",
-                "text-align": "center",
-                margin: 0
-            }
-        })
-        .then(() => resolve(path.join(__dirname, "tray.png")))
-        .catch(error => reject(error));
-    });
-}
