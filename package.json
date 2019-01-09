@@ -18,11 +18,12 @@
   },
   "homepage": "https://github.com/Fchen48/Pinger#readme",
   "devDependencies": {
-    "electron": "^3.0.3"
+    "electron": "^4.0.1"
   },
   "dependencies": {
     "auto-launch": "^5.0.5",
-    "electron-config": "^1.0.0",
+    "electron-config": "^2.0.0",
+    "jimp": "^0.6.0",
     "puppeteer-render-text": "^1.0.3"
   }
 }
